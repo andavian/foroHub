@@ -1,7 +1,6 @@
-package com.andavian.forohub.topico;
+package com.andavian.forohub.domain.topico;
 
 import jakarta.persistence.*;
-import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;

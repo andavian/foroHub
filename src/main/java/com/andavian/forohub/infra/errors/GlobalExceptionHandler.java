@@ -1,4 +1,4 @@
-package com.andavian.forohub.Exceptions;
+package com.andavian.forohub.infra.errors;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;

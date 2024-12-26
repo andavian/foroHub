@@ -1,7 +1,7 @@
 package com.andavian.forohub.controller;
 
-import com.andavian.forohub.Exceptions.ResourceNotFoundException;
-import com.andavian.forohub.topico.*;
+import com.andavian.forohub.domain.topico.*;
+import com.andavian.forohub.infra.errors.ResourceNotFoundException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -13,8 +13,9 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.Optional;
+import java.net.URI;
 
 @RestController
 @RequestMapping("/topicos")
@@ -25,32 +26,46 @@ public class TopicoController {
     private TopicoRepository topicoRepository;
 
     @PostMapping
-    public void crearTopico (@RequestBody @Valid DatosTopico datosTopico){
+    public ResponseEntity<DatosResponseTopico> crearTopico (
+            @RequestBody
+            @Valid
+            DatosTopico datosTopico,
+            UriComponentsBuilder uriComponentsBuilder){
 
-        topicoRepository.save(new Topico(datosTopico));
+        Topico topico = topicoRepository.save(new Topico(datosTopico));
+
+        // Construir la URL del recurso creado
+        URI url = uriComponentsBuilder
+                .path("/medicos/{id}")
+                .buildAndExpand(topico.getId())
+                .toUri();
+
+        // Retornar la respuesta con código 201 (Created)
+        return ResponseEntity.created(url).body(new DatosResponseTopico(topico));
+
     }
 
     @GetMapping(path = {"/", ""})
-    public Page<DatosListadoTopico> listaDeTopicos
+    public ResponseEntity<Page<DatosListadoTopico>> listaDeTopicos
             (@PageableDefault(page = 0, size = 10, sort = {"fechaDeCreacion"}) Pageable paginacion){
 
-        return topicoRepository.findByActivoTrue(paginacion).map(DatosListadoTopico::new);
+        return ResponseEntity.ok(topicoRepository.findByActivoTrue(paginacion).map(DatosListadoTopico::new));
     }
 
     @GetMapping("/{id}")
-    public DatosListadoTopico detalleTopico(
+    public ResponseEntity<DatosResponseTopico> detalleTopico(
             @PathVariable
             @NotNull(message = "El ID no puede ser nulo")
             @Positive(message = "El ID debe ser mayor a 0")
             Long id) {
         Topico topico = topicoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Tópico no encontrado con id: " + id));
-        return new DatosListadoTopico(topico);
+        return ResponseEntity.ok(new DatosResponseTopico(topico));
     }
 
     @PutMapping
     @Transactional
-    public ResponseEntity<?> actualizarTopico(
+    public ResponseEntity<DatosResponseTopico> actualizarTopico(
             @RequestBody @Valid DatosActualizarTopico datosActualizarTopico) {
         // Buscar el tópico en la base de datos
         Topico topico = topicoRepository.findById(datosActualizarTopico.id())
@@ -60,13 +75,13 @@ public class TopicoController {
         topico.actualizarDatos(datosActualizarTopico);
 
         // Devolver respuesta exitosa
-        return ResponseEntity.ok("Tópico actualizado correctamente");
+        return ResponseEntity.ok(new DatosResponseTopico(topico));
     }
 
 
     @DeleteMapping("/{id}")
     @Transactional
-    public void eliminarTopico(
+    public ResponseEntity<DatosResponseTopico> eliminarTopico(
             @PathVariable
             @NotNull(message = "El ID no puede ser nulo")
             @Positive(message = "El ID debe ser mayor a 0")
@@ -74,5 +89,8 @@ public class TopicoController {
         Topico topico = topicoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Tópico no encontrado con id: " + id));
         topico.archivarTopico();
+        return ResponseEntity.noContent().build();
     }
+
+
 }

@@ -1,4 +1,4 @@
-package com.andavian.forohub.Exceptions;
+package com.andavian.forohub.infra.errors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
